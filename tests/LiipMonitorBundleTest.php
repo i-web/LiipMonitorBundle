@@ -101,6 +101,22 @@ final class LiipMonitorBundleTest extends KernelTestCase
     /**
      * @test
      * @group slow
+     * @throws \JsonException
+     */
+    public function execute_health_command_with_json_output(): void
+    {
+        $output = $this->executeConsoleCommand('monitor:health --json')
+            ->output()
+        ;
+
+        // Verify that the output is valid JSON
+        $jsonData = \json_decode($output, true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($jsonData);
+    }
+
+    /**
+     * @test
+     * @group slow
      */
     public function messenger_run_check_suite(): void
     {
