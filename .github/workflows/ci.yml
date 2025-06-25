@@ -15,19 +15,18 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
+        php: [ 8.1, 8.2, 8.3, 8.4 ]
+        deps: [ highest ]
+        symfony: [ 6.4.*, 7.2.*, 7.3.* ]
         include:
-          - php: 7.4
-            symfony: 5.4.*
-          - php: 8.0
-            symfony: 5.4.*
           - php: 8.1
-            symfony: 6.4.*
-          - php: 8.2
-            symfony: 6.4.*
-          - php: 8.2
-            symfony: 7.0.*
-          - php: 8.3
-            symfony: 7.0.*
+            deps: lowest
+            symfony: '*'
+        exclude:
+          - php: 8.1
+            symfony: 7.2.*
+          - php: 8.1
+            symfony: 7.3.*
 
     steps:
       - name: Checkout code
@@ -40,39 +39,13 @@ jobs:
           coverage: none
           tools: flex
 
-      - name: Install symfony/mailer
-        run: composer require --dev "symfony/mailer" --no-update
-
       - name: Install dependencies
         uses: ramsey/composer-install@v2
         with:
+          dependency-versions: ${{ inputs.deps }}
           composer-options: --prefer-dist
         env:
           SYMFONY_REQUIRE: ${{ matrix.symfony }}
-
-      - name: Run tests
-        run: vendor/bin/phpunit -v
-
-  prefer-lowest-tests:
-    name: "Test: prefer-lowest"
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 7.3
-          coverage: none
-
-      - name: Install dependencies
-        uses: ramsey/composer-install@v2
-        with:
-          dependency-versions: lowest
-          composer-options: --prefer-dist
 
       - name: Run tests
         run: vendor/bin/phpunit -v
@@ -87,11 +60,8 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 7.4
+          php-version: 8.3
           coverage: xdebug
-
-      - name: Install symfony/mailer
-        run: composer require --dev "symfony/mailer" --no-update
 
       - name: Install dependencies
         uses: ramsey/composer-install@v2
@@ -111,7 +81,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 7.4
+          php-version: 8.3
           coverage: none
 
       - name: Validate composer.json
@@ -127,7 +97,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 7.4
+          php-version: 8.1
           coverage: none
 
       - name: Install dependencies
