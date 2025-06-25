@@ -1,5 +1,10 @@
 <?php
 
+namespace Liip\MonitorBundle\Tests\Fixture;
+
+use Liip\MonitorBundle\LiipMonitorBundle;
+use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
+use Symfony\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\HttpKernel\Kernel;
 
@@ -11,9 +16,9 @@ class AppKernel extends Kernel
     public function registerBundles(): array
     {
         return [
-            new Symfony\Bundle\FrameworkBundle\FrameworkBundle(),
-            new Symfony\Bundle\TwigBundle\TwigBundle(),
-            new Liip\MonitorBundle\LiipMonitorBundle(),
+            new FrameworkBundle(),
+            new TwigBundle(),
+            new LiipMonitorBundle(),
         ];
     }
 

@@ -1,6 +1,6 @@
-/Tests/app/cache
-/Tests/app/logs
-/Tests/app/var
+/Tests/Fixture/cache
+/Tests/Fixture/logs
+/Tests/Fixture/var
 /vendor
 composer.lock
 .phpunit.result.cache
