@@ -3,7 +3,6 @@
 namespace Liip\MonitorBundle\Tests\DependencyInjection\Compiler;
 
 use Liip\MonitorBundle\DependencyInjection\Compiler\MailerCompilerPass;
-use Liip\MonitorBundle\Helper\SwiftMailerReporter;
 use Liip\MonitorBundle\Helper\SymfonyMailerReporter;
 use Matthias\SymfonyDependencyInjectionTest\PhpUnit\AbstractCompilerPassTestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -20,62 +19,6 @@ class MailerCompilerPassTest extends AbstractCompilerPassTestCase
         $this->compile();
 
         $this->assertContainerBuilderNotHasService('liip_monitor.reporter.symfony_mailer');
-        $this->assertContainerBuilderNotHasService('liip_monitor.reporter.swift_mailer');
-    }
-
-    public function testSwiftMailer(): void
-    {
-        $this->setParameter('liip_monitor.mailer.enabled', true);
-        $this->setDefinition('mailer', new Definition(\Swift_Mailer::class));
-
-        $this->compile();
-
-        $this->assertContainerBuilderNotHasService('liip_monitor.reporter.symfony_mailer');
-        $this->assertContainerBuilderHasService('liip_monitor.reporter.swift_mailer', SwiftMailerReporter::class);
-
-        $this->assertContainerBuilderHasServiceDefinitionWithArgument(
-            'liip_monitor.reporter.swift_mailer',
-            0,
-            new Reference('mailer')
-        );
-        $this->assertContainerBuilderHasServiceDefinitionWithArgument(
-            'liip_monitor.reporter.swift_mailer',
-            1,
-            '%liip_monitor.mailer.recipient%'
-        );
-        $this->assertContainerBuilderHasServiceDefinitionWithArgument(
-            'liip_monitor.reporter.swift_mailer',
-            2,
-            '%liip_monitor.mailer.sender%'
-        );
-        $this->assertContainerBuilderHasServiceDefinitionWithArgument(
-            'liip_monitor.reporter.swift_mailer',
-            3,
-            '%liip_monitor.mailer.subject%'
-        );
-        $this->assertContainerBuilderHasServiceDefinitionWithArgument(
-            'liip_monitor.reporter.swift_mailer',
-            4,
-            '%liip_monitor.mailer.send_on_warning%'
-        );
-        $this->assertContainerBuilderHasServiceDefinitionWithTag(
-            'liip_monitor.reporter.swift_mailer',
-            'liip_monitor.additional_reporter',
-            ['alias' => 'swift_mailer']
-        );
-    }
-
-    public function testSwiftMailerWithAliasDefinition(): void
-    {
-        $this->setParameter('liip_monitor.mailer.enabled', true);
-        $this->setDefinition('swift.mailer', new Definition(\Swift_Mailer::class));
-        $this->container->setAlias('mailer', 'swift.mailer');
-
-        $this->assertContainerBuilderHasAlias('mailer');
-
-        $this->compile();
-
-        $this->assertContainerBuilderHasService('liip_monitor.reporter.swift_mailer', SwiftMailerReporter::class);
     }
 
     public function testSymfonyMailer(): void
@@ -85,7 +28,6 @@ class MailerCompilerPassTest extends AbstractCompilerPassTestCase
 
         $this->compile();
 
-        $this->assertContainerBuilderNotHasService('liip_monitor.reporter.swift_mailer');
         $this->assertContainerBuilderHasService('liip_monitor.reporter.symfony_mailer', SymfonyMailerReporter::class);
 
         $this->assertContainerBuilderHasServiceDefinitionWithArgument(
@@ -136,23 +78,10 @@ class MailerCompilerPassTest extends AbstractCompilerPassTestCase
     public function testMailerWithoutPackage(): void
     {
         $this->setParameter('liip_monitor.mailer.enabled', true);
-        $this->expectExceptionMessage('To enable mail reporting you have to install the "swiftmailer/swiftmailer" or "symfony/mailer".');
+        $this->expectExceptionMessage('To enable mail reporting you have to install "symfony/mailer".');
         $this->expectException(\InvalidArgumentException::class);
 
         $this->assertContainerBuilderNotHasService('mailer');
-        $this->compile();
-    }
-
-    public function testMailerMissingAliasDefinition(): void
-    {
-        $this->setParameter('liip_monitor.mailer.enabled', true);
-        $this->setDefinition('swift.mailer', new Definition(\Swift_Mailer::class));
-
-        $this->assertFalse($this->container->hasAlias('mailer'));
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('To enable mail reporting you have to install the "swiftmailer/swiftmailer" or "symfony/mailer".');
-
         $this->compile();
     }
 

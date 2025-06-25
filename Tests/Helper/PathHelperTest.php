@@ -7,13 +7,6 @@ use Symfony\Component\HttpKernel\Kernel;
 
 class PathHelperTest extends WebTestCase
 {
-    public static function getKernelClass(): string
-    {
-        require_once __DIR__.'/../app/AppKernel.php';
-
-        return 'AppKernel';
-    }
-
     public function testGenerateRoutes(): void
     {
         $environment = 'symfony'.Kernel::MAJOR_VERSION;
