@@ -13,6 +13,7 @@ namespace Liip\Monitor\Tests\DependencyInjection;
 
 use Liip\Monitor\Check\CheckContext;
 use Liip\Monitor\Check\Doctrine\DbalConnectionCheck;
+use Liip\Monitor\Check\Symfony\SymfonyMessengerReceiverCheck;
 use Liip\Monitor\DependencyInjection\LiipMonitorExtension;
 use Matthias\SymfonyDependencyInjectionTest\PhpUnit\AbstractCompilerPassTestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -34,6 +35,20 @@ final class LiipMonitorCompilerPassTest extends AbstractCompilerPassTestCase
 
         $this->assertContainerBuilderHasService('.liip_monitor.check.doctrine_dbal_connection.default', DbalConnectionCheck::class);
         $this->assertContainerBuilderHasService('.liip_monitor.check.doctrine_dbal_connection.default.context', CheckContext::class);
+    }
+
+    /**
+     * @test
+     */
+    public function adds_default_symfony_messenger_receiver_checks(): void
+    {
+        $this->setParameter('liip_monitor.check.symfony_messenger_receiver.all', []);
+        $this->registerService('default', 'service')->addTag('messenger.receiver');
+
+        $this->compile();
+
+        $this->assertContainerBuilderHasService('.liip_monitor.check.symfony_messenger_receiver.default', SymfonyMessengerReceiverCheck::class);
+        $this->assertContainerBuilderHasService('.liip_monitor.check.symfony_messenger_receiver.default.context', CheckContext::class);
     }
 
     protected function registerCompilerPass(ContainerBuilder $container): void
