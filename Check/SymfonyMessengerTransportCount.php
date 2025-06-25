@@ -4,6 +4,7 @@ namespace Liip\MonitorBundle\Check;
 
 use Laminas\Diagnostics\Check\AbstractCheck;
 use Laminas\Diagnostics\Result\Failure;
+use Laminas\Diagnostics\Result\ResultInterface;
 use Laminas\Diagnostics\Result\Success;
 use Laminas\Diagnostics\Result\Warning;
 use Symfony\Component\Messenger\Transport\Receiver\MessageCountAwareInterface;
@@ -29,7 +30,7 @@ class SymfonyMessengerTransportCount extends AbstractCheck
         }
     }
 
-    public function check()
+    public function check(): ResultInterface
     {
         $count = $this->transport->getMessageCount();
 

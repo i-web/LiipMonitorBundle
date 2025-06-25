@@ -27,7 +27,7 @@ class SymfonyMessengerTransportCountCollection implements CheckCollectionInterfa
         $this->transports = $transportConfig;
     }
 
-    public function getChecks()
+    public function getChecks(): array
     {
         $checks = [];
         foreach ($this->transports as $transportName => $config) {
