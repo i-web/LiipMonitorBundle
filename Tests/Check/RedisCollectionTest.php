@@ -18,10 +18,10 @@ final class RedisCollectionTest extends TestCase
     public function handleDsnWithAuth(string $dsn): void
     {
         $config = [
-          'dsn' => $dsn,
-          'host' => 'localhost',
-          'port' => 6379,
-          'password' => null,
+            'dsn' => $dsn,
+            'host' => 'localhost',
+            'port' => 6379,
+            'password' => null,
         ];
 
         $collection = new RedisCollection(['default' => $config]);
@@ -48,8 +48,8 @@ final class RedisCollectionTest extends TestCase
     public function provideDsnWithAut(): array
     {
         return [
-          'incompatible with parse_url' => [sprintf('redis://%s@127.0.0.1:6379', static::AUTH)],
-          'compatible with parse_url' => [sprintf('redis://irrelevant-user:%s@127.0.0.1:6379', static::AUTH)],
+            'incompatible with parse_url' => [sprintf('redis://%s@127.0.0.1:6379', static::AUTH)],
+            'compatible with parse_url' => [sprintf('redis://irrelevant-user:%s@127.0.0.1:6379', static::AUTH)],
         ];
     }
 }

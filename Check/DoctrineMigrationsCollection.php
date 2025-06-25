@@ -42,7 +42,7 @@ class DoctrineMigrationsCollection implements CheckCollectionInterface
      */
     public function __construct(
         ContainerInterface $container,
-        array $migrations
+        array $migrations,
     ) {
         $this->container = $container;
         $this->migrations = $migrations;
