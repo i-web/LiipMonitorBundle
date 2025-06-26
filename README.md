@@ -798,4 +798,14 @@ liip_monitor:
                 ttl:                  null
                 label:                null
                 id:                   null
+
+        # fails if message count fails
+        symfony_messenger_receiver:
+
+            # Prototype
+            name:
+                suite:                []
+                ttl:                  null
+                label:                null
+                id:                   null
 ```

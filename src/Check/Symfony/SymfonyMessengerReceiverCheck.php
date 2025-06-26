@@ -70,6 +70,7 @@ final class SymfonyMessengerReceiverCheck implements Check, ConfigurableCheck, S
         return 'fails if it cannot execute getMessageCount().';
     }
 
+    // inspired by DbalConnectionCheck
     #[Override]
     public static function addConfig(ArrayNodeDefinition $node): NodeDefinition
     {
@@ -100,6 +101,7 @@ final class SymfonyMessengerReceiverCheck implements Check, ConfigurableCheck, S
             ;
     }
 
+    // inspired by DbalConnectionCheck
     #[Override]
     public static function load(array $config, ContainerBuilder $container): void
     {
@@ -120,6 +122,7 @@ final class SymfonyMessengerReceiverCheck implements Check, ConfigurableCheck, S
         }
     }
 
+    // inspired by DbalConnectionCheck
     public static function process(ContainerBuilder $container): void
     {
         $checkAllReceiversParameterName = 'liip_monitor.check.' . self::configKey() . '.all';
