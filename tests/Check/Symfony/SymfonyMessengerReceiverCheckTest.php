@@ -1,8 +1,16 @@
 <?php
 
+/*
+ * This file is part of the liip/monitor-bundle package.
+ *
+ * (c) Liip
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Liip\Monitor\Tests\Check\Symfony;
 
-use Exception;
 use Liip\Monitor\Check\Symfony\SymfonyMessengerReceiverCheck;
 use Liip\Monitor\Result;
 use Liip\Monitor\Result\Status;
@@ -61,7 +69,7 @@ final class SymfonyMessengerReceiverCheckTest extends TestCase
         $receiver = $this->createMock(MessageCountAwareInterface::class);
         $receiver->expects($this->once())
             ->method('getMessageCount')
-            ->willThrowException(new Exception('Connection error'));
+            ->willThrowException(new \Exception('Connection error'));
 
         $serviceLocator = $this->createMock(ServiceLocator::class);
         $serviceLocator->expects($this->once())

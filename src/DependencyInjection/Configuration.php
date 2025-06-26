@@ -110,28 +110,28 @@ final class Configuration implements ConfigurationInterface
             ->then(fn($v) => [$v])
             ->end()
             ->prototype('scalar')->cannotBeEmpty()->end()
-            ;
+        ;
     }
 
     public static function addTtlConfig(): NodeDefinition
     {
         return (new TreeBuilder('ttl', 'integer'))->getRootNode()
             ->defaultNull()
-            ;
+        ;
     }
 
     public static function addLabelConfig(): NodeDefinition
     {
         return (new TreeBuilder('label', 'scalar'))->getRootNode()
             ->defaultNull()
-            ;
+        ;
     }
 
     public static function addIdConfig(): NodeDefinition
     {
         return (new TreeBuilder('id', 'scalar'))->getRootNode()
             ->defaultNull()
-            ;
+        ;
     }
 
     /**
