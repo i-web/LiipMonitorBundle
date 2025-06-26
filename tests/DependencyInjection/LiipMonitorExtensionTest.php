@@ -19,6 +19,7 @@ use Liip\Monitor\Check\Php\ComposerAuditCheck;
 use Liip\Monitor\Check\Php\OpCacheMemoryUsageCheck;
 use Liip\Monitor\Check\Php\PhpVersionCheck;
 use Liip\Monitor\Check\PingUrlCheck;
+use Liip\Monitor\Check\Symfony\SymfonyMessengerReceiverCheck;
 use Liip\Monitor\Check\Symfony\SymfonyVersionCheck;
 use Liip\Monitor\Check\System\DiskUsageCheck;
 use Liip\Monitor\Check\System\FreeDiskSpaceCheck;
@@ -153,6 +154,35 @@ final class LiipMonitorExtensionTest extends AbstractExtensionTestCase
         $this->assertContainerBuilderHasService('.liip_monitor.check.system_load_average.1_minute', LoadAverageCheck::class);
         $this->assertContainerBuilderHasService('.liip_monitor.check.system_load_average.5_minute', LoadAverageCheck::class);
         $this->assertContainerBuilderHasService('.liip_monitor.check.system_load_average.15_minute', LoadAverageCheck::class);
+    }
+
+    /**
+     * @test
+     */
+    public function enable_symfony_messenger_receiver(): void
+    {
+        $this->loadCheck(['symfony_messenger_receiver' => true]);
+        $this->assertContainerBuilderHasParameter('liip_monitor.check.symfony_messenger_receiver.all', [
+            'suite' => [],
+            'ttl' => null,
+            'label' => null,
+            'id' => null,
+        ]);
+
+        $this->loadCheck(['symfony_messenger_receiver' => ['suite' => 'foo']]);
+        $this->assertContainerBuilderHasParameter('liip_monitor.check.symfony_messenger_receiver.all', [
+            'suite' => ['foo'],
+            'ttl' => null,
+            'label' => null,
+            'id' => null,
+        ]);
+
+        $this->loadCheck(['symfony_messenger_receiver' => 'default']);
+        $this->assertContainerBuilderHasService('.liip_monitor.check.symfony_messenger_receiver.default', SymfonyMessengerReceiverCheck::class);
+
+        $this->loadCheck(['symfony_messenger_receiver' => ['first', 'second']]);
+        $this->assertContainerBuilderHasService('.liip_monitor.check.symfony_messenger_receiver.first', SymfonyMessengerReceiverCheck::class);
+        $this->assertContainerBuilderHasService('.liip_monitor.check.symfony_messenger_receiver.second', SymfonyMessengerReceiverCheck::class);
     }
 
     protected function getContainerExtensions(): array

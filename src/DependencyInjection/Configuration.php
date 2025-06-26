@@ -18,6 +18,7 @@ use Liip\Monitor\Check\Php\ComposerAuditCheck;
 use Liip\Monitor\Check\Php\OpCacheMemoryUsageCheck;
 use Liip\Monitor\Check\Php\PhpVersionCheck;
 use Liip\Monitor\Check\PingUrlCheck;
+use Liip\Monitor\Check\Symfony\SymfonyMessengerReceiverCheck;
 use Liip\Monitor\Check\Symfony\SymfonyVersionCheck;
 use Liip\Monitor\Check\System\DiskUsageCheck;
 use Liip\Monitor\Check\System\FreeDiskSpaceCheck;
@@ -49,6 +50,7 @@ final class Configuration implements ConfigurationInterface
         SymfonyVersionCheck::class,
         PingUrlCheck::class,
         DbalConnectionCheck::class,
+        SymfonyMessengerReceiverCheck::class,
     ];
 
     public function getConfigTreeBuilder(): TreeBuilder
@@ -56,41 +58,41 @@ final class Configuration implements ConfigurationInterface
         $builder = new TreeBuilder('liip_monitor');
 
         $node = $builder->getRootNode() // @phpstan-ignore-line
+        ->children()
+            ->integerNode('default_ttl')
+            ->info('Default TTL for checks')
+            ->defaultNull()
+            ->min(0)
+            ->end()
+            ->arrayNode('logging')
+            ->canBeEnabled()
+            ->end()
+            ->arrayNode('mailer')
+            ->canBeEnabled()
             ->children()
-                ->integerNode('default_ttl')
-                    ->info('Default TTL for checks')
-                    ->defaultNull()
-                    ->min(0)
-                ->end()
-                ->arrayNode('logging')
-                    ->canBeEnabled()
-                ->end()
-                ->arrayNode('mailer')
-                    ->canBeEnabled()
-                    ->children()
-                        ->arrayNode('recipient')
-                            ->isRequired()
-                            ->requiresAtLeastOneElement()
-                            ->scalarPrototype()->end()
-                            ->beforeNormalization()
-                                ->ifString()
-                                ->then(fn($v) => [$v])
-                            ->end()
-                        ->end()
-                        ->scalarNode('sender')
-                            ->defaultNull()
-                        ->end()
-                        ->scalarNode('subject')
-                            ->defaultValue('Health Check Failed')
-                            ->cannotBeEmpty()
-                        ->end()
-                        ->booleanNode('send_on_warning')->defaultFalse()->end()
-                        ->booleanNode('send_on_skip')->defaultFalse()->end()
-                        ->booleanNode('send_on_unknown')->defaultFalse()->end()
-                    ->end()
-                ->end()
-                ->arrayNode('checks')
-                    ->children()
+            ->arrayNode('recipient')
+            ->isRequired()
+            ->requiresAtLeastOneElement()
+            ->scalarPrototype()->end()
+            ->beforeNormalization()
+            ->ifString()
+            ->then(fn($v) => [$v])
+            ->end()
+            ->end()
+            ->scalarNode('sender')
+            ->defaultNull()
+            ->end()
+            ->scalarNode('subject')
+            ->defaultValue('Health Check Failed')
+            ->cannotBeEmpty()
+            ->end()
+            ->booleanNode('send_on_warning')->defaultFalse()->end()
+            ->booleanNode('send_on_skip')->defaultFalse()->end()
+            ->booleanNode('send_on_unknown')->defaultFalse()->end()
+            ->end()
+            ->end()
+            ->arrayNode('checks')
+            ->children()
         ;
 
         foreach (self::CHECKS as $check) {
@@ -103,9 +105,9 @@ final class Configuration implements ConfigurationInterface
     public static function addSuiteConfig(): NodeDefinition
     {
         return (new TreeBuilder('suite'))->getRootNode() // @phpstan-ignore-line
-            ->beforeNormalization()
-                ->ifString()
-                ->then(fn($v) => [$v])
+        ->beforeNormalization()
+            ->ifString()
+            ->then(fn($v) => [$v])
             ->end()
             ->prototype('scalar')->cannotBeEmpty()->end()
         ;

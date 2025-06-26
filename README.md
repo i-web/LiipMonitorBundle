@@ -60,6 +60,10 @@ liip_monitor:
 
         symfony_version: true
 
+        symfony_messenger_receiver: true # auto creates a check for each symfony message receiver
+        symfony_messenger_receiver: default # use specific symfony message receiver
+        symfony_messenger_receiver: [default, alternate] # use specific symfony message receivers
+
         dbal_connection: true # auto creates a check for each dbal connection
         dbal_connection: default # use specific dbal connection
         dbal_connection: [default, alternate] # use specific dbal connections
@@ -787,6 +791,16 @@ liip_monitor:
 
         # fails if dbal connection fails
         dbal_connection:
+
+            # Prototype
+            name:
+                suite:                []
+                ttl:                  null
+                label:                null
+                id:                   null
+
+        # fails if message count fails
+        symfony_messenger_receiver:
 
             # Prototype
             name:
