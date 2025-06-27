@@ -85,15 +85,13 @@ final class FreeDiskSpaceCheck implements Check, ConfigurableCheck, \Stringable
         return $node // @phpstan-ignore-line
             ->beforeNormalization()
                 ->ifTrue(fn($v) => \is_array($v) && isset($v['warning']))
-                ->then(function($v) {
-                    return [
-                        [
-                            'path' => $v['path'] ?? '/',
-                            'warning' => $v['warning'],
-                            'critical' => $v['critical'] ?? $v['warning'],
-                        ],
-                    ];
-                })
+                ->then(fn($v) => [
+                    [
+                        'path' => $v['path'] ?? '/',
+                        'warning' => $v['warning'],
+                        'critical' => $v['critical'] ?? $v['warning'],
+                    ],
+                ])
             ->end()
             ->arrayPrototype()
                 ->children()

@@ -59,7 +59,7 @@ final class LaminasDiagnosticsBridgeCheckTest extends TestCase
         ];
 
         yield [
-            self::create(fn() => new class() extends AbstractResult {}),
+            self::create(fn() => new class extends AbstractResult {}),
             Result::unknown('', context: ['data' => null]),
         ];
     }
