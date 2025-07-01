@@ -16,6 +16,7 @@ use Liip\Monitor\AsCheck;
 use Liip\Monitor\Check;
 use Liip\Monitor\Check\CheckContext;
 use Liip\Monitor\Check\Doctrine\DbalConnectionCheck;
+use Liip\Monitor\Check\Flysystem\FlysystemStorageCheck;
 use Liip\Monitor\Check\Symfony\SymfonyMessengerReceiverCheck;
 use Liip\Monitor\System\LinuxSystem;
 use Symfony\Component\Config\FileLocator;
@@ -37,6 +38,7 @@ final class LiipMonitorExtension extends ConfigurableExtension implements Compil
     {
         DbalConnectionCheck::process($container);
         SymfonyMessengerReceiverCheck::process($container);
+        FlysystemStorageCheck::process($container);
 
         $suites = [];
 
