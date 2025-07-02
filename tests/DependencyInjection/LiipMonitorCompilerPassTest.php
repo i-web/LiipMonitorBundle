@@ -13,6 +13,7 @@ namespace Liip\Monitor\Tests\DependencyInjection;
 
 use Liip\Monitor\Check\CheckContext;
 use Liip\Monitor\Check\Doctrine\DbalConnectionCheck;
+use Liip\Monitor\Check\Flysystem\FlysystemStorageCheck;
 use Liip\Monitor\Check\Symfony\SymfonyMessengerReceiverCheck;
 use Liip\Monitor\DependencyInjection\LiipMonitorExtension;
 use Matthias\SymfonyDependencyInjectionTest\PhpUnit\AbstractCompilerPassTestCase;
@@ -49,6 +50,20 @@ final class LiipMonitorCompilerPassTest extends AbstractCompilerPassTestCase
 
         $this->assertContainerBuilderHasService('.liip_monitor.check.symfony_messenger_receiver.default', SymfonyMessengerReceiverCheck::class);
         $this->assertContainerBuilderHasService('.liip_monitor.check.symfony_messenger_receiver.default.context', CheckContext::class);
+    }
+
+    /**
+     * @test
+     */
+    public function adds_default_flysystem_storage_checks(): void
+    {
+        $this->setParameter('liip_monitor.check.flysystem_storage.all', ['operations' => ['read'], 'path' => 'test.txt']);
+        $this->registerService('default', 'service')->addTag('flysystem.storage');
+
+        $this->compile();
+
+        $this->assertContainerBuilderHasService('.liip_monitor.check.flysystem_storage.default', FlysystemStorageCheck::class);
+        $this->assertContainerBuilderHasService('.liip_monitor.check.flysystem_storage.default.context', CheckContext::class);
     }
 
     protected function registerCompilerPass(ContainerBuilder $container): void

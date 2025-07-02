@@ -12,6 +12,7 @@
 namespace Liip\Monitor\DependencyInjection;
 
 use Liip\Monitor\Check\Doctrine\DbalConnectionCheck;
+use Liip\Monitor\Check\Flysystem\FlysystemStorageCheck;
 use Liip\Monitor\Check\Php\ApcuFragmentationCheck;
 use Liip\Monitor\Check\Php\ApcuMemoryUsageCheck;
 use Liip\Monitor\Check\Php\ComposerAuditCheck;
@@ -51,6 +52,7 @@ final class Configuration implements ConfigurationInterface
         PingUrlCheck::class,
         DbalConnectionCheck::class,
         SymfonyMessengerReceiverCheck::class,
+        FlysystemStorageCheck::class,
     ];
 
     public function getConfigTreeBuilder(): TreeBuilder

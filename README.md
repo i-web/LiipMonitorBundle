@@ -68,6 +68,13 @@ liip_monitor:
         dbal_connection: default # use specific dbal connection
         dbal_connection: [default, alternate] # use specific dbal connections
 
+        flysystem_storage: true # auto creates a check for each flysystem storage
+        flysystem_storage: default # use specific flysystem storage
+        flysystem_storage: [default, alternate] # use specific flysystem storages
+        flysystem_storage:
+            operations: ['write'] # check only write operation
+            path: ['monitor/test.txt'] # use specific path
+
         # requires configuration
         ping_url:
             Server1: https://www.example.com # ensures a 2xx response
@@ -804,6 +811,18 @@ liip_monitor:
 
             # Prototype
             name:
+                suite:                []
+                ttl:                  null
+                label:                null
+                id:                   null
+
+        # fails if operation(s) fail
+        flysystem_storage:
+
+            # Prototype
+            name:
+                operations:           null
+                path:                 null
                 suite:                []
                 ttl:                  null
                 label:                null
