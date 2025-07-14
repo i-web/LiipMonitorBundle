@@ -32,9 +32,11 @@ final class FlysystemStorageCheck implements Check, ConfigurableCheck, \Stringab
     public function __construct(
         private readonly Filesystem $storage,
         private readonly string $name,
+        private readonly string $mode,
         private readonly array $operations,
-        private readonly string $path,
+        private string $path,
     ) {
+        $this->path = $this->normalizePath($path, $mode);
     }
 
     #[\Override]
@@ -48,27 +50,28 @@ final class FlysystemStorageCheck implements Check, ConfigurableCheck, \Stringab
     {
         $successfullOperations = [];
         $failedOperations = [];
+        $path = $this->path;
+
         if (\in_array('write', $this->operations, true)) {
-            try {
-                $this->storage->write($this->path, 'test');
+            if (('directory' === $this->mode && $this->canWriteToDirectory($path)) || ('file' === $this->mode && $this->canWriteFile($path))) {
                 $successfullOperations[] = 'write';
-            } catch (\Throwable) {
+            } else {
                 $failedOperations[] = 'write';
             }
         }
+
         if (\in_array('read', $this->operations, true)) {
-            try {
-                $this->storage->read($this->path);
+            if (('directory' === $this->mode && $this->canReadFromDirectory($path)) || ('file' === $this->mode && $this->canReadFile($path))) {
                 $successfullOperations[] = 'read';
-            } catch (\Throwable) {
+            } else {
                 $failedOperations[] = 'read';
             }
         }
+
         if (\in_array('delete', $this->operations, true)) {
-            try {
-                $this->storage->delete($this->path);
+            if (('directory' === $this->mode && $this->canDeleteFromDirectory($path)) || ('file' === $this->mode && $this->canDeleteFile($path))) {
                 $successfullOperations[] = 'delete';
-            } catch (\Throwable) {
+            } else {
                 $failedOperations[] = 'delete';
             }
         }
@@ -89,7 +92,7 @@ final class FlysystemStorageCheck implements Check, ConfigurableCheck, \Stringab
     #[\Override]
     public static function configInfo(): ?string
     {
-        return 'fails if it cannot write/read/delete a file.';
+        return 'fails if it cannot write/read/delete a directory or file.';
     }
 
     // inspired by DbalConnectionCheck
@@ -112,22 +115,27 @@ final class FlysystemStorageCheck implements Check, ConfigurableCheck, \Stringab
                 ->then(fn($v) => [['name' => self::ALL_STORAGES, ...$v]])
             ->end()
             ->useAttributeAsKey('name')
-        ->arrayPrototype()
-            ->children()
-                ->arrayNode('operations')
-                    ->prototype('scalar')->end()
-                    ->info('The operations to perform. Possible values are: write, read, delete.')
-                    ->defaultValue(['write', 'read', 'delete'])
+            ->arrayPrototype()
+                ->children()
+                    ->scalarNode('mode')
+                        ->info('The mode to use. Possible values are: file, directory.')
+                        ->defaultValue('directory')
+                    ->end()
+                    ->arrayNode('operations')
+                        ->prototype('scalar')->end()
+                        ->info('The operations to perform. Possible values are: write, read, delete.')
+                        ->defaultValue(['write', 'read', 'delete'])
+                    ->end()
+                    ->scalarNode('path')
+                        ->info('The path to check. If mode is file, the path must end with a file name. If mode is directory, the path must end with a directory name.')
+                        ->defaultValue('/')
+                    ->end()
+                    ->append(Configuration::addSuiteConfig())
+                    ->append(Configuration::addTtlConfig())
+                    ->append(Configuration::addLabelConfig())
+                    ->append(Configuration::addIdConfig())
                 ->end()
-                ->scalarNode('path')
-                    ->defaultValue('monitor.txt')
-                ->end()
-                ->append(Configuration::addSuiteConfig())
-                ->append(Configuration::addTtlConfig())
-                ->append(Configuration::addLabelConfig())
-                ->append(Configuration::addIdConfig())
             ->end()
-        ->end()
         ;
     }
 
@@ -147,8 +155,9 @@ final class FlysystemStorageCheck implements Check, ConfigurableCheck, \Stringab
                       ->setArguments(
                           [new Reference($name),
                               $name,
-                              $check['operations'],
-                              $check['path'],
+                              $check['mode'] ?? 'directory',
+                              $check['operations'] ?? ['write', 'read', 'delete'],
+                              $check['path'] ?? '/',
                           ])
                       ->addTag('liip_monitor.check', $check)
             ;
@@ -172,5 +181,102 @@ final class FlysystemStorageCheck implements Check, ConfigurableCheck, \Stringab
         $config = \array_map(static fn() => $config, $storages);
 
         self::load($config, $container);
+    }
+
+    private function canWriteToDirectory(string $directoryPath): bool
+    {
+        try {
+            if (!$this->storage->directoryExists($directoryPath)) { // check if directory exists
+                return false;
+            }
+            $this->storage->visibility($directoryPath); // try to get and set visibility (indicates write permission)
+
+            return true; // if we can read visibility, we likely have write access
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function canReadFromDirectory(string $directoryPath): bool
+    {
+        try {
+            $contents = $this->storage->listContents($directoryPath, false); // check if we can list directory contents
+            $contents->toArray(); // try to count items (forces iteration)
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function canDeleteFromDirectory(string $directoryPath): bool
+    {
+        return $this->canWriteToDirectory($directoryPath);
+    }
+
+    private function canWriteFile(string $filePath): bool
+    {
+        try {
+            $this->storage->write($filePath, 'test');
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function canReadFile(string $filePath): bool
+    {
+        try {
+            if (!$this->storage->fileExists($filePath)) {
+                return false;
+            }
+            $this->storage->read($filePath);
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function canDeleteFile(string $filePath): bool
+    {
+        try {
+            if (!$this->storage->fileExists($filePath)) {
+                return false;
+            }
+            $this->storage->delete($filePath);
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function normalizePath(string $path, string $mode): string
+    {
+        // Normalize path separators and clean up
+        $normalized = \rtrim(\str_replace('\\', '/', $path), '/');
+        if ('' === $normalized) {
+            $normalized = '/';
+        }
+
+        if ('file' === $mode) {
+            // For file mode, if path ends with '/' or is just '/', append a test file
+            if ('/' === $normalized || \str_ends_with($normalized, '/')) {
+                $normalized = \rtrim($normalized, '/').'/monitor-test.txt';
+            }
+        } elseif ('directory' === $mode) {
+            // For directory mode, ensure we're working with a directory path
+            if ('/' !== $normalized && \preg_match('/\.[a-zA-Z0-9]+$/', \basename($normalized))) {
+                // If it looks like a file, use its directory
+                $normalized = \dirname($normalized);
+                if ('.' === $normalized) {
+                    $normalized = '/';
+                }
+            }
+        }
+
+        return $normalized;
     }
 }
