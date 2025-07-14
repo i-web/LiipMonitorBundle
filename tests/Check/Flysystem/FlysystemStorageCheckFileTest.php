@@ -17,7 +17,7 @@ use Liip\Monitor\Result;
 use Liip\Monitor\Tests\CheckTests;
 use PHPUnit\Framework\TestCase;
 
-final class FlysystemStorageCheckTest extends TestCase
+final class FlysystemStorageCheckFileTest extends TestCase
 {
     use CheckTests;
 
@@ -26,10 +26,14 @@ final class FlysystemStorageCheckTest extends TestCase
         // Test successful write, read, delete operations
         yield [
             function() {
-                $storage = (new FlysystemStorageCheckTest())->createMock(Filesystem::class);
+                $storage = (new FlysystemStorageCheckFileTest())->createMock(Filesystem::class);
                 $storage->expects(self::once())
                     ->method('write')
                     ->with('test.txt', 'test');
+                $storage->expects(self::exactly(2))
+                    ->method('fileExists')
+                    ->with('test.txt')
+                    ->willReturn(true);
                 $storage->expects(self::once())
                     ->method('read')
                     ->with('test.txt')
@@ -38,7 +42,7 @@ final class FlysystemStorageCheckTest extends TestCase
                     ->method('delete')
                     ->with('test.txt');
 
-                return new FlysystemStorageCheck($storage, 'default', ['write', 'read', 'delete'], 'test.txt');
+                return new FlysystemStorageCheck($storage, 'default', 'file', ['write', 'read', 'delete'], 'test.txt');
             },
             Result::success('successfull operations: write, read, delete'),
             'Flysystem Storage "default"',
@@ -47,7 +51,7 @@ final class FlysystemStorageCheckTest extends TestCase
         // Test successful write operation only
         yield [
             function() {
-                $storage = (new FlysystemStorageCheckTest())->createMock(Filesystem::class);
+                $storage = (new FlysystemStorageCheckFileTest())->createMock(Filesystem::class);
                 $storage->expects(self::once())
                     ->method('write')
                     ->with('test.txt', 'test');
@@ -56,7 +60,7 @@ final class FlysystemStorageCheckTest extends TestCase
                 $storage->expects(self::never())
                     ->method('delete');
 
-                return new FlysystemStorageCheck($storage, 'default', ['write'], 'test.txt');
+                return new FlysystemStorageCheck($storage, 'default', 'file', ['write'], 'test.txt');
             },
             Result::success('successfull operations: write'),
         ];
@@ -64,7 +68,7 @@ final class FlysystemStorageCheckTest extends TestCase
         // Test failed write operation
         yield [
             function() {
-                $storage = (new FlysystemStorageCheckTest())->createMock(Filesystem::class);
+                $storage = (new FlysystemStorageCheckFileTest())->createMock(Filesystem::class);
                 $storage->expects(self::once())
                     ->method('write')
                     ->with('test.txt', 'test')
@@ -74,7 +78,7 @@ final class FlysystemStorageCheckTest extends TestCase
                 $storage->expects(self::never())
                     ->method('delete');
 
-                return new FlysystemStorageCheck($storage, 'default', ['write'], 'test.txt');
+                return new FlysystemStorageCheck($storage, 'default', 'file', ['write'], 'test.txt');
             },
             Result::failure('failed operations: write'),
         ];
@@ -82,10 +86,14 @@ final class FlysystemStorageCheckTest extends TestCase
         // Test failed read operation
         yield [
             function() {
-                $storage = (new FlysystemStorageCheckTest())->createMock(Filesystem::class);
+                $storage = (new FlysystemStorageCheckFileTest())->createMock(Filesystem::class);
                 $storage->expects(self::once())
                     ->method('write')
                     ->with('test.txt', 'test');
+                $storage->expects(self::once())
+                    ->method('fileExists')
+                    ->with('test.txt')
+                    ->willReturn(true);
                 $storage->expects(self::once())
                     ->method('read')
                     ->with('test.txt')
@@ -93,7 +101,28 @@ final class FlysystemStorageCheckTest extends TestCase
                 $storage->expects(self::never())
                     ->method('delete');
 
-                return new FlysystemStorageCheck($storage, 'default', ['write', 'read'], 'test.txt');
+                return new FlysystemStorageCheck($storage, 'default', 'file', ['write', 'read'], 'test.txt');
+            },
+            Result::failure('failed operations: read'),
+        ];
+
+        // Test failed read operation due to file not existing
+        yield [
+            function() {
+                $storage = (new FlysystemStorageCheckFileTest())->createMock(Filesystem::class);
+                $storage->expects(self::once())
+                    ->method('write')
+                    ->with('test.txt', 'test');
+                $storage->expects(self::once())
+                    ->method('fileExists')
+                    ->with('test.txt')
+                    ->willReturn(false);
+                $storage->expects(self::never())
+                    ->method('read');
+                $storage->expects(self::never())
+                    ->method('delete');
+
+                return new FlysystemStorageCheck($storage, 'default', 'file', ['write', 'read'], 'test.txt');
             },
             Result::failure('failed operations: read'),
         ];
@@ -101,20 +130,55 @@ final class FlysystemStorageCheckTest extends TestCase
         // Test failed delete operation
         yield [
             function() {
-                $storage = (new FlysystemStorageCheckTest())->createMock(Filesystem::class);
+                $storage = (new FlysystemStorageCheckFileTest())->createMock(Filesystem::class);
                 $storage->expects(self::once())
                     ->method('write')
                     ->with('test.txt', 'test');
+                $storage->expects(self::once())
+                    ->method('fileExists')
+                    ->with('test.txt')
+                    ->willReturn(true);
                 $storage->expects(self::once())
                     ->method('read')
                     ->with('test.txt')
                     ->willReturn('test');
                 $storage->expects(self::once())
+                    ->method('fileExists')
+                    ->with('test.txt')
+                    ->willReturn(true);
+                $storage->expects(self::once())
                     ->method('delete')
                     ->with('test.txt')
                     ->willThrowException(new \Exception('Delete error'));
 
-                return new FlysystemStorageCheck($storage, 'default', ['write', 'read', 'delete'], 'test.txt');
+                return new FlysystemStorageCheck($storage, 'default', 'file', ['write', 'read', 'delete'], 'test.txt');
+            },
+            Result::failure('failed operations: delete'),
+        ];
+
+        // Test failed delete operation due to file not existing
+        yield [
+            function() {
+                $storage = (new FlysystemStorageCheckFileTest())->createMock(Filesystem::class);
+                $storage->expects(self::once())
+                    ->method('write')
+                    ->with('test.txt', 'test');
+                $storage->expects(self::once())
+                    ->method('fileExists')
+                    ->with('test.txt')
+                    ->willReturn(true);
+                $storage->expects(self::once())
+                    ->method('read')
+                    ->with('test.txt')
+                    ->willReturn('test');
+                $storage->expects(self::once())
+                    ->method('fileExists')
+                    ->with('test.txt')
+                    ->willReturn(false);
+                $storage->expects(self::never())
+                    ->method('delete');
+
+                return new FlysystemStorageCheck($storage, 'default', 'file', ['write', 'read', 'delete'], 'test.txt');
             },
             Result::failure('failed operations: delete'),
         ];
@@ -122,11 +186,15 @@ final class FlysystemStorageCheckTest extends TestCase
         // Test multiple failed operations
         yield [
             function() {
-                $storage = (new FlysystemStorageCheckTest())->createMock(Filesystem::class);
+                $storage = (new FlysystemStorageCheckFileTest())->createMock(Filesystem::class);
                 $storage->expects(self::once())
                     ->method('write')
                     ->with('test.txt', 'test')
                     ->willThrowException(new \Exception('Write error'));
+                $storage->expects(self::once())
+                    ->method('fileExists')
+                    ->with('test.txt')
+                    ->willReturn(true);
                 $storage->expects(self::once())
                     ->method('read')
                     ->with('test.txt')
@@ -134,7 +202,7 @@ final class FlysystemStorageCheckTest extends TestCase
                 $storage->expects(self::never())
                     ->method('delete');
 
-                return new FlysystemStorageCheck($storage, 'default', ['write', 'read'], 'test.txt');
+                return new FlysystemStorageCheck($storage, 'default', 'file', ['write', 'read'], 'test.txt');
             },
             Result::failure('failed operations: write, read'),
         ];
@@ -142,10 +210,14 @@ final class FlysystemStorageCheckTest extends TestCase
         // Test with different storage name
         yield [
             function() {
-                $storage = (new FlysystemStorageCheckTest())->createMock(Filesystem::class);
+                $storage = (new FlysystemStorageCheckFileTest())->createMock(Filesystem::class);
                 $storage->expects(self::once())
                     ->method('write')
                     ->with('test.txt', 'test');
+                $storage->expects(self::exactly(2))
+                    ->method('fileExists')
+                    ->with('test.txt')
+                    ->willReturn(true);
                 $storage->expects(self::once())
                     ->method('read')
                     ->with('test.txt')
@@ -154,7 +226,7 @@ final class FlysystemStorageCheckTest extends TestCase
                     ->method('delete')
                     ->with('test.txt');
 
-                return new FlysystemStorageCheck($storage, 'custom_storage', ['write', 'read', 'delete'], 'test.txt');
+                return new FlysystemStorageCheck($storage, 'custom_storage', 'file', ['write', 'read', 'delete'], 'test.txt');
             },
             Result::success('successfull operations: write, read, delete'),
             'Flysystem Storage "custom_storage"',
@@ -163,10 +235,14 @@ final class FlysystemStorageCheckTest extends TestCase
         // Test with different path
         yield [
             function() {
-                $storage = (new FlysystemStorageCheckTest())->createMock(Filesystem::class);
+                $storage = (new FlysystemStorageCheckFileTest())->createMock(Filesystem::class);
                 $storage->expects(self::once())
                     ->method('write')
                     ->with('custom/path.txt', 'test');
+                $storage->expects(self::exactly(2))
+                    ->method('fileExists')
+                    ->with('custom/path.txt')
+                    ->willReturn(true);
                 $storage->expects(self::once())
                     ->method('read')
                     ->with('custom/path.txt')
@@ -175,7 +251,7 @@ final class FlysystemStorageCheckTest extends TestCase
                     ->method('delete')
                     ->with('custom/path.txt');
 
-                return new FlysystemStorageCheck($storage, 'default', ['write', 'read', 'delete'], 'custom/path.txt');
+                return new FlysystemStorageCheck($storage, 'default', 'file', ['write', 'read', 'delete'], 'custom/path.txt');
             },
             Result::success('successfull operations: write, read, delete'),
         ];
