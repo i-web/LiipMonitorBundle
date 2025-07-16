@@ -57,7 +57,7 @@ final class LiipMonitorCompilerPassTest extends AbstractCompilerPassTestCase
      */
     public function adds_default_flysystem_storage_checks(): void
     {
-        $this->setParameter('liip_monitor.check.flysystem_storage.all', ['operations' => ['read'], 'path' => 'test.txt']);
+        $this->setParameter('liip_monitor.check.flysystem_storage.all', []);
         $this->registerService('default', 'service')->addTag('flysystem.storage');
 
         $this->compile();

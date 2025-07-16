@@ -70,10 +70,16 @@ liip_monitor:
 
         flysystem_storage: true # auto creates a check for each flysystem storage
         flysystem_storage: default # use specific flysystem storage
-        flysystem_storage: [default, alternate] # use specific flysystem storages
+        flysystem_storage: [first, second] # use specific flysystem storages
         flysystem_storage:
+            mode: 'file'
             operations: ['write'] # check only write operation
             path: ['monitor/test.txt'] # use specific path
+        flysystem_storage:
+            local: # check all operations on a file
+                mode: 'file'
+            remote: # check only read on a directory
+                operations: [ 'read' ]
 
         # requires configuration
         ping_url:
@@ -821,6 +827,7 @@ liip_monitor:
 
             # Prototype
             name:
+                mode:                 null
                 operations:           null
                 path:                 null
                 suite:                []

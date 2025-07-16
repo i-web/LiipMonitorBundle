@@ -13,7 +13,6 @@ namespace Liip\Monitor\Tests\DependencyInjection;
 
 use Liip\Monitor\Check\CheckRegistry;
 use Liip\Monitor\Check\Doctrine\DbalConnectionCheck;
-use Liip\Monitor\Check\Flysystem\FlysystemStorageCheck;
 use Liip\Monitor\Check\Php\ApcuFragmentationCheck;
 use Liip\Monitor\Check\Php\ApcuMemoryUsageCheck;
 use Liip\Monitor\Check\Php\ComposerAuditCheck;
@@ -193,16 +192,18 @@ final class LiipMonitorExtensionTest extends AbstractExtensionTestCase
     {
         $this->loadCheck(['flysystem_storage' => true]);
         $this->assertContainerBuilderHasParameter('liip_monitor.check.flysystem_storage.all', [
+            'mode' => 'directory',
             'operations' => ['write', 'read', 'delete'],
-            'path' => 'monitor.txt',
+            'path' => '/',
             'suite' => [],
             'ttl' => null,
             'label' => null,
             'id' => null,
         ]);
 
-        $this->loadCheck(['flysystem_storage' => ['operations' => ['write'], 'path' => 'test.txt', 'suite' => 'foo']]);
+        $this->loadCheck(['flysystem_storage' => ['mode' => 'file', 'operations' => ['write'], 'path' => 'test.txt', 'suite' => 'foo']]);
         $this->assertContainerBuilderHasParameter('liip_monitor.check.flysystem_storage.all', [
+            'mode' => 'file',
             'operations' => ['write'],
             'path' => 'test.txt',
             'suite' => ['foo'],
@@ -212,11 +213,23 @@ final class LiipMonitorExtensionTest extends AbstractExtensionTestCase
         ]);
 
         $this->loadCheck(['flysystem_storage' => 'default']);
-        $this->assertContainerBuilderHasService('.liip_monitor.check.flysystem_storage.default', FlysystemStorageCheck::class);
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('.liip_monitor.check.flysystem_storage.default', 1, 'default');
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('.liip_monitor.check.flysystem_storage.default', 2, 'directory');
 
         $this->loadCheck(['flysystem_storage' => ['first', 'second']]);
-        $this->assertContainerBuilderHasService('.liip_monitor.check.flysystem_storage.first', FlysystemStorageCheck::class);
-        $this->assertContainerBuilderHasService('.liip_monitor.check.flysystem_storage.second', FlysystemStorageCheck::class);
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('.liip_monitor.check.flysystem_storage.first', 1, 'first');
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('.liip_monitor.check.flysystem_storage.second', 1, 'second');
+
+        $this->loadCheck(['flysystem_storage' => [
+            'first' => ['mode' => 'file', 'operations' => ['write', 'read']],
+            'second' => ['operations' => ['write', 'delete']],
+        ]]);
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('.liip_monitor.check.flysystem_storage.first', 1, 'first');
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('.liip_monitor.check.flysystem_storage.first', 2, 'file');
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('.liip_monitor.check.flysystem_storage.first', 3, ['write', 'read']);
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('.liip_monitor.check.flysystem_storage.second', 1, 'second');
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('.liip_monitor.check.flysystem_storage.second', 2, 'directory');
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('.liip_monitor.check.flysystem_storage.second', 3, ['write', 'delete']);
     }
 
     protected function getContainerExtensions(): array
