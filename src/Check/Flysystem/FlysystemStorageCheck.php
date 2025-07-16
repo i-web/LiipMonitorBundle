@@ -264,7 +264,7 @@ final class FlysystemStorageCheck implements Check, ConfigurableCheck, \Stringab
         if ('file' === $mode) {
             // For file mode, if path ends with '/' or is just '/', append a test file
             if ('/' === $normalized || \str_ends_with($normalized, '/')) {
-                $normalized = \rtrim($normalized, '/').'/monitor-test.txt';
+                $normalized = \rtrim($normalized, '/').'/'.uniqid('monitor-test-', true).'.txt';
             }
         } elseif ('directory' === $mode) {
             // For directory mode, ensure we're working with a directory path
